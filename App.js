@@ -6,9 +6,11 @@
 
 import React, { Component } from 'react';
 import {
+  FlatList,
   Platform,
   StyleSheet,
   Text,
+  TouchableHighlight,
   View
 } from 'react-native';
 
@@ -21,18 +23,59 @@ const instructions = Platform.select({
 
 type Props = {};
 export default class App extends Component<Props> {
+  componentDidMount() {
+    this.fetchEvents();
+  }
+
+  state = {
+    items: [],
+  }
+
+  fetchEvents = async () => {
+    try {
+
+      const result = await fetch('http://sync.noteable.me:3001/page');
+      const items = await result.json();
+      this.setState({
+        items,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  sync = async () => {
+    try {
+      const result = await fetch('http://sync.noteable.me:3001/add', {
+        method: 'POST',
+        body: JSON.stringify({
+          command: 'sync',
+        }),
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  renderItem = ({ item, index }) => {
+    return (
+      <View style={{ marginVertical: 10 }}><Text>{JSON.stringify(item)}</Text></View>
+    );
+  }
+
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit App.js
-        </Text>
-        <Text style={styles.instructions}>
-          {instructions}
-        </Text>
+        <TouchableHighlight onPress={this.sync}>
+          <Text>WOW</Text>
+        </TouchableHighlight>
+        <FlatList
+          onContentSizeChange={this.scrollEnd}
+          data={this.state.items}
+          removeClippedSubviews={false}
+          keyExtractor={(item, index) => `${index}`}
+          renderItem={this.renderItem}
+        />
       </View>
     );
   }
